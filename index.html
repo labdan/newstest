@@ -64,10 +64,6 @@
     const loadingSpinner = document.getElementById('loading-spinner');
     const newsletterOutput = document.getElementById('newsletter-output');
 
-    // Use a Netlify environment variable for the API key
-    const apiKey = "process.env.G_API_KEY"; //
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
     // Helper function to create HTML elements
     const createElement = (tag, classes, text) => {
         const el = document.createElement(tag);
@@ -89,38 +85,22 @@
         
         for (const category of categories) {
             try {
-                const prompt = `Find the latest news headlines and short summaries from the last 3 days for the category: "${category}". Provide exactly 3-4 headlines and a one-sentence summary for each. Format the response with bold headlines followed by the summary.`;
-
-                const payload = {
-                    contents: [{ parts: [{ text: prompt }] }],
-                    tools: [{ "google_search": {} }],
-                };
-
-                const response = await fetch(apiUrl, {
+                // Fetch the data from the Netlify Function
+                const response = await fetch('/.netlify/functions/generate-newsletter', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ category })
                 });
 
                 if (!response.ok) {
                     throw new Error(`API response error: ${response.statusText}`);
                 }
 
-                const result = await response.json();
-                const candidate = result.candidates?.[0];
-
-                if (candidate && candidate.content?.parts?.[0]?.text) {
-                    const generatedText = candidate.content.parts[0].text;
-                    const groundingMetadata = candidate.groundingMetadata;
-                    let sources = [];
-                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
-                        sources = groundingMetadata.groundingAttributions
-                            .map(attribution => ({
-                                uri: attribution.web?.uri,
-                                title: attribution.web?.title,
-                            }))
-                            .filter(source => source.uri && source.title);
-                    }
+                const data = await response.json();
+                
+                if (data.generatedText) {
+                    const generatedText = data.generatedText;
+                    const sources = data.sources || [];
                     
                     const categoryContainer = createElement('div', 'bg-white p-6 rounded-2xl shadow-lg');
                     const categoryTitle = createElement('h2', 'text-2xl font-bold text-gray-800 mb-6 capitalize border-b-2 border-blue-200 pb-2', category);
