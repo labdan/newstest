@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI News Aggregator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .container {
+            max-width: 900px;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            -webkit-border-radius: 50%;
+            -moz-border-radius: 50%;
+            -ms-border-radius: 50%;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            -webkit-animation: spin 1s linear infinite;
+            -moz-animation: spin 1s linear infinite;
+            -o-animation: spin 1s linear infinite;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+<div class="container bg-white p-8 rounded-2xl shadow-xl w-full">
+    <div class="text-center mb-8">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-2">AI Newsletter Generator</h1>
+        <p class="text-lg text-gray-600">Enter categories to get the latest headlines and summaries.</p>
+    </div>
+
+    <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-8">
+        <input id="category-input" type="text" placeholder="e.g., Technology, Business, Science" class="flex-grow w-full px-5 py-3 text-gray-700 bg-gray-50 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" />
+        <button id="generate-button" class="w-full sm:w-auto px-6 py-3 font-semibold text-white bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 shadow-md">
+            Generate Newsletter
+        </button>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loading-spinner" class="hidden flex justify-center py-8">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Newsletter Output -->
+    <div id="newsletter-output" class="space-y-10"></div>
+</div>
+
+<script type="module">
+    const categoryInput = document.getElementById('category-input');
+    const generateButton = document.getElementById('generate-button');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const newsletterOutput = document.getElementById('newsletter-output');
+
+    // Use a Netlify environment variable for the API key
+    const apiKey = "process.env.G_API_KEY"; //
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+    // Helper function to create HTML elements
+    const createElement = (tag, classes, text) => {
+        const el = document.createElement(tag);
+        if (classes) el.className = classes;
+        if (text) el.textContent = text;
+        return el;
+    };
+
+    generateButton.addEventListener('click', async () => {
+        const categories = categoryInput.value.split(',').map(c => c.trim()).filter(c => c.length > 0);
+
+        if (categories.length === 0) {
+            newsletterOutput.innerHTML = `<p class="text-red-500 text-center">Please enter at least one category.</p>`;
+            return;
+        }
+
+        newsletterOutput.innerHTML = '';
+        loadingSpinner.classList.remove('hidden');
+        
+        for (const category of categories) {
+            try {
+                const prompt = `Find the latest news headlines and short summaries from the last 3 days for the category: "${category}". Provide exactly 3-4 headlines and a one-sentence summary for each. Format the response with bold headlines followed by the summary.`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    tools: [{ "google_search": {} }],
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API response error: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const generatedText = candidate.content.parts[0].text;
+                    const groundingMetadata = candidate.groundingMetadata;
+                    let sources = [];
+                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                        sources = groundingMetadata.groundingAttributions
+                            .map(attribution => ({
+                                uri: attribution.web?.uri,
+                                title: attribution.web?.title,
+                            }))
+                            .filter(source => source.uri && source.title);
+                    }
+                    
+                    const categoryContainer = createElement('div', 'bg-white p-6 rounded-2xl shadow-lg');
+                    const categoryTitle = createElement('h2', 'text-2xl font-bold text-gray-800 mb-6 capitalize border-b-2 border-blue-200 pb-2', category);
+                    
+                    categoryContainer.appendChild(categoryTitle);
+
+                    // Parse headlines and summaries
+                    const lines = generatedText.split('\n').filter(line => line.trim().length > 0);
+                    
+                    let currentArticle;
+                    for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (line.startsWith('**') && line.endsWith('**')) {
+                            if (currentArticle) {
+                                categoryContainer.appendChild(currentArticle);
+                            }
+                            currentArticle = createElement('div', 'p-4 rounded-xl border border-gray-200 mb-4 hover:shadow-md transition-shadow');
+                            const headlineText = line.substring(2, line.length - 2);
+                            const headlineElement = createElement('h3', 'text-lg font-bold text-gray-900', headlineText);
+                            currentArticle.appendChild(headlineElement);
+                        } else if (currentArticle) {
+                            const summaryElement = createElement('p', 'text-gray-700 mt-2 leading-relaxed', line);
+                            currentArticle.appendChild(summaryElement);
+                        }
+                    }
+                    if (currentArticle) {
+                        categoryContainer.appendChild(currentArticle);
+                    }
+
+                    if (sources.length > 0) {
+                        const sourcesList = createElement('ul', 'mt-4 text-sm text-gray-500 space-y-1 border-t pt-4 border-gray-200');
+                        sources.forEach(source => {
+                            const sourceItem = createElement('li');
+                            const sourceLink = createElement('a', 'hover:underline text-blue-500', source.title);
+                            sourceLink.href = source.uri;
+                            sourceLink.target = '_blank';
+                            sourceItem.appendChild(sourceLink);
+                            sourcesList.appendChild(sourceItem);
+                        });
+                        const sourcesTitle = createElement('p', 'font-semibold text-xs text-gray-500 mt-4', 'Sources:');
+                        categoryContainer.appendChild(sourcesTitle);
+                        categoryContainer.appendChild(sourcesList);
+                    }
+
+                    newsletterOutput.appendChild(categoryContainer);
+                } else {
+                    const errorContainer = createElement('div', 'bg-red-50 p-6 rounded-xl text-red-700 text-center', `Error: No content generated for "${category}".`);
+                    newsletterOutput.appendChild(errorContainer);
+                }
+            } catch (error) {
+                console.error(error);
+                const errorContainer = createElement('div', 'bg-red-50 p-6 rounded-xl text-red-700 text-center', `Error fetching data for "${category}". Please try again later.`);
+                newsletterOutput.appendChild(errorContainer);
+            }
+        }
+        loadingSpinner.classList.add('hidden');
+    });
+</script>
+
+</body>
+</html>
