@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI News Aggregator</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body {
@@ -47,6 +48,9 @@
         <button id="generate-button" class="w-full sm:w-auto px-6 py-3 font-semibold text-white bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 shadow-md">
             Generate Newsletter
         </button>
+        <button id="download-pdf-button" class="w-full sm:w-auto px-6 py-3 font-semibold text-white bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 shadow-md hidden">
+            Download PDF
+        </button>
     </div>
 
     <!-- Loading Indicator -->
@@ -61,6 +65,7 @@
 <script type="module">
     const categoryInput = document.getElementById('category-input');
     const generateButton = document.getElementById('generate-button');
+    const downloadPdfButton = document.getElementById('download-pdf-button');
     const loadingSpinner = document.getElementById('loading-spinner');
     const newsletterOutput = document.getElementById('newsletter-output');
 
@@ -82,6 +87,7 @@
 
         newsletterOutput.innerHTML = '';
         loadingSpinner.classList.remove('hidden');
+        downloadPdfButton.classList.add('hidden');
         
         for (const category of categories) {
             try {
@@ -157,6 +163,33 @@
             }
         }
         loadingSpinner.classList.add('hidden');
+        if (newsletterOutput.children.length > 0) {
+            downloadPdfButton.classList.remove('hidden');
+        }
+    });
+
+    downloadPdfButton.addEventListener('click', () => {
+        // Hide the button and show a brief message while generating the PDF
+        downloadPdfButton.disabled = true;
+        downloadPdfButton.textContent = 'Generating...';
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'pt', 'a4');
+        const element = document.getElementById('newsletter-output');
+
+        doc.html(element, {
+            callback: (doc) => {
+                doc.save('newsletter.pdf');
+                downloadPdfButton.disabled = false;
+                downloadPdfButton.textContent = 'Download PDF';
+            },
+            x: 10,
+            y: 10,
+            html2canvas: {
+                scale: 0.8,
+                windowWidth: element.offsetWidth
+            }
+        });
     });
 </script>
 
