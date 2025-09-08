@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI News Aggregator</title>
+    <title>AI IPM News Aggregator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -11,86 +11,90 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-        }
-        .container {
-            max-width: 900px;
-        }
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3b82f6;
-            -webkit-border-radius: 50%;
-            -moz-border-radius: 50%;
-            -ms-border-radius: 50%;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            -webkit-animation: spin 1s linear infinite;
-            -moz-animation: spin 1s linear infinite;
-            -o-animation: spin 1s linear infinite;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
 
-        /* PDF specific styles to ensure it looks professional and is not cropped */
+        /* Styling for the web preview */
+        .web-view {
+            background-color: #f3f4f6;
+            padding: 2rem;
+        }
+
+        .newsletter-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            border-radius: 0.75rem;
+        }
+
+        .category-heading {
+            border-bottom: 2px solid #0272bc;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            color: #103551;
+            font-weight: 700;
+        }
+
+        .article-card {
+            border: 1px solid #e5e7eb;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            background-color: #fafafa;
+        }
+
+        /* PDF-specific styling for professional printing */
         @media print {
             body {
-                background-color: #fff !important;
-                color: #000;
+                font-family: 'Inter', sans-serif;
+                background-color: #103551 !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
                 margin: 0;
                 padding: 0;
             }
-            .container {
+            .newsletter-container {
                 max-width: 100%;
-                padding: 20mm;
+                margin: 0;
+                padding: 15mm;
                 box-shadow: none;
+                border-radius: 0;
+                background-color: #103551 !important;
             }
-            .newsletter-section {
+            .article-card {
+                page-break-inside: avoid;
                 box-shadow: none;
-                border: 1px solid #103551;
-                margin-bottom: 20px;
-                padding: 15px;
-                background-color: #fff !important;
+                background-color: #0272bc !important;
+                border: 1px solid #0272bc;
+                padding: 1rem;
+                margin-bottom: 1rem;
+                color: white !important;
             }
-            .newsletter-article {
-                border: none;
-                padding: 10px;
-                margin-bottom: 10px;
-                background-color: #f8f8f8 !important;
-                border-radius: 8px;
+            .article-card h3, .article-card p {
+                color: white !important;
             }
-            .newsletter-article h3 {
-                font-size: 16px;
-                line-height: 1.2;
-                margin-bottom: 5px;
-            }
-            .newsletter-article p {
-                font-size: 12px;
-                line-height: 1.5;
-            }
-            .category-title {
-                color: #103551 !important;
-                font-size: 24px;
+            .category-heading {
+                page-break-after: avoid;
+                color: white !important;
+                font-weight: 700;
                 border-bottom: 2px solid #0272bc;
+                padding-bottom: 0.5rem;
+                margin-top: 2rem;
             }
-            .no-print {
-                display: none;
-            }
-            .print-only {
-                display: block !important;
-            }
-            .source-link {
-                display: none;
+            .main-title {
+                text-align: center;
+                font-size: 2.5rem;
+                font-weight: 800;
+                color: white !important;
+                margin-bottom: 2rem;
             }
         }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
-<div class="container bg-white p-8 rounded-2xl shadow-xl w-full">
+<div class="newsletter-container">
     <div class="text-center mb-8 no-print">
         <h1 class="text-4xl font-extrabold text-gray-900 mb-2">IPM Newsletter Generator</h1>
         <p class="text-lg text-gray-600">Enter categories to get the latest headlines and summaries.</p>
@@ -106,14 +110,16 @@
         </button>
     </div>
 
+    <!-- Loading Indicator -->
     <div id="loading-spinner" class="hidden flex justify-center py-8">
         <div class="loader"></div>
     </div>
     
     <div class="text-center mb-8 hidden print-only">
-        <h1 class="text-4xl font-extrabold text-gray-900 mb-2">Your AI Newsletter</h1>
+        <h1 class="main-title text-4xl font-extrabold text-gray-900 mb-2">AI Newsletter</h1>
     </div>
 
+    <!-- Newsletter Output -->
     <div id="newsletter-output" class="space-y-10"></div>
 </div>
 
