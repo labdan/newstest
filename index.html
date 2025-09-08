@@ -38,7 +38,7 @@
         /* PDF specific styles to ensure it looks professional and is not cropped */
         @media print {
             body {
-                background-color: #fff;
+                background-color: #fff !important;
                 color: #000;
                 margin: 0;
                 padding: 0;
@@ -50,14 +50,17 @@
             }
             .newsletter-section {
                 box-shadow: none;
-                border: 1px solid #e5e7eb;
+                border: 1px solid #103551;
                 margin-bottom: 20px;
                 padding: 15px;
+                background-color: #fff !important;
             }
             .newsletter-article {
                 border: none;
                 padding: 10px;
                 margin-bottom: 10px;
+                background-color: #f8f8f8 !important;
+                border-radius: 8px;
             }
             .newsletter-article h3 {
                 font-size: 16px;
@@ -69,9 +72,9 @@
                 line-height: 1.5;
             }
             .category-title {
-                color: #1a202c !important;
+                color: #103551 !important;
                 font-size: 24px;
-                border-bottom: 2px solid #3b82f6;
+                border-bottom: 2px solid #0272bc;
             }
             .no-print {
                 display: none;
@@ -81,6 +84,13 @@
             }
             .source-link {
                 display: none;
+            }
+            .category-icon {
+                display: inline-block;
+                width: 24px;
+                height: 24px;
+                margin-right: 8px;
+                vertical-align: middle;
             }
         }
     </style>
@@ -103,6 +113,7 @@
         </button>
     </div>
 
+    <!-- Loading Indicator -->
     <div id="loading-spinner" class="hidden flex justify-center py-8">
         <div class="loader"></div>
     </div>
@@ -111,6 +122,7 @@
         <h1 class="text-4xl font-extrabold text-gray-900 mb-2">Your AI Newsletter</h1>
     </div>
 
+    <!-- Newsletter Output -->
     <div id="newsletter-output" class="space-y-10"></div>
 </div>
 
@@ -127,6 +139,20 @@
         if (classes) el.className = classes;
         if (text) el.textContent = text;
         return el;
+    };
+
+    // Mapping for category icons
+    const categoryIcons = {
+        'technology': `<svg class="category-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0272bc"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 16H9v-2h2v2zm0-4H9v-2h2v2zm0-4H9V8h2v2zm4 4h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V8h2v2z"/></svg>`,
+        'business': `<svg class="category-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0272bc"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 16h4c1.1 0 2-.9 2-2v-2h-8v2c0 1.1.9 2 2 2zm0-4h4c1.1 0 2-.9 2-2v-2h-8v2c0 1.1.9 2 2 2zm0-4h4V8h-4v2zm4-4V5.99c0-.55-.45-1-1-1h-2c-.55 0-1 .45-1 1v2h4z"/></svg>`,
+        'science': `<svg class="category-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0272bc"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 16H9v-2h2v2zm0-4H9v-2h2v2zm0-4H9V8h2v2zm4 4h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V8h2v2z"/></svg>`,
+        'finance': `<svg class="category-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0272bc"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 16H9v-2h2v2zm0-4H9v-2h2v2zm0-4H9V8h2v2zm4 4h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V8h2v2z"/></svg>`,
+        'general': `<svg class="category-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0272bc"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 16H9v-2h2v2zm0-4H9v-2h2v2zm0-4H9V8h2v2zm4 4h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V8h2v2z"/></svg>`,
+    };
+
+    const getIconForCategory = (category) => {
+        const key = category.toLowerCase().trim();
+        return categoryIcons[key] || categoryIcons['general'];
     };
 
     generateButton.addEventListener('click', async () => {
@@ -162,7 +188,7 @@
                     
                     const categoryContainer = createElement('div', 'bg-white p-6 rounded-2xl shadow-lg newsletter-section');
                     const categoryTitle = createElement('h2', 'text-2xl font-bold text-gray-800 mb-6 capitalize border-b-2 border-blue-200 pb-2 category-title');
-                    categoryTitle.textContent = category;
+                    categoryTitle.innerHTML = `${getIconForCategory(category)}<span>${category}</span>`;
                     
                     categoryContainer.appendChild(categoryTitle);
 
@@ -185,13 +211,12 @@
                                 const sourceLink = document.createElement('a');
                                 sourceLink.href = sources[0].uri;
                                 sourceLink.target = '_blank';
-                                sourceLink.className = 'text-sm text-blue-500 hover:underline ml-2';
+                                sourceLink.className = 'text-sm text-blue-500 hover:underline ml-2 source-link';
                                 sourceLink.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-4-2h4m0 0v4m0-4L14 6" />
                                 </svg>`;
                                 headlineElement.appendChild(sourceLink);
                             }
-
                         } else if (currentArticle) {
                             const summaryElement = createElement('p', 'text-gray-700 mt-2 leading-relaxed', line);
                             currentArticle.appendChild(summaryElement);
@@ -232,9 +257,9 @@
             downloadPdfButton.classList.remove('hidden');
         }
     });
-
-    downloadPdfButton.addEventListener('click', () => {
-        // Hide the button and show a brief message while generating the PDF
+    
+    // New function to handle PDF generation
+    const generatePdf = () => {
         downloadPdfButton.disabled = true;
         downloadPdfButton.textContent = 'Generating...';
 
@@ -262,7 +287,9 @@
             downloadPdfButton.disabled = false;
             downloadPdfButton.textContent = 'Download PDF';
         }
-    });
+    };
+
+    downloadPdfButton.addEventListener('click', generatePdf);
 </script>
 
 </body>
