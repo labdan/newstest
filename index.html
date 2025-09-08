@@ -35,7 +35,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* PDF specific styles */
+        /* PDF specific styles to ensure it looks professional and is not cropped */
         @media print {
             body {
                 background-color: #fff;
@@ -45,20 +45,37 @@
             }
             .container {
                 max-width: 100%;
-                padding: 10mm;
+                padding: 20mm;
                 box-shadow: none;
             }
-            #newsletter-output {
-                page-break-after: always;
+            .newsletter-section {
+                box-shadow: none;
+                border: 1px solid #e5e7eb;
+                margin-bottom: 20px;
+                padding: 15px;
             }
             .newsletter-article {
-                page-break-inside: avoid;
+                border: none;
+                padding: 10px;
+                margin-bottom: 10px;
+            }
+            .newsletter-article h3 {
+                font-size: 16px;
+            }
+            .newsletter-article p {
+                font-size: 12px;
+                line-height: 1.5;
+            }
+            .category-title {
+                color: #1a202c !important;
+                font-size: 24px;
+                border-bottom: 2px solid #3b82f6;
             }
             .no-print {
                 display: none;
             }
-            h1, h2, h3, p, ul, li {
-                color: #000 !important;
+            .print-only {
+                display: block !important;
             }
         }
     </style>
@@ -81,7 +98,6 @@
         </button>
     </div>
 
-    <!-- Loading Indicator -->
     <div id="loading-spinner" class="hidden flex justify-center py-8">
         <div class="loader"></div>
     </div>
@@ -90,7 +106,6 @@
         <h1 class="text-4xl font-extrabold text-gray-900 mb-2">Your AI Newsletter</h1>
     </div>
 
-    <!-- Newsletter Output -->
     <div id="newsletter-output" class="space-y-10"></div>
 </div>
 
@@ -141,7 +156,8 @@
                     const sources = data.sources || [];
                     
                     const categoryContainer = createElement('div', 'bg-white p-6 rounded-2xl shadow-lg newsletter-section');
-                    const categoryTitle = createElement('h2', 'text-2xl font-bold text-gray-800 mb-6 capitalize border-b-2 border-blue-200 pb-2', category);
+                    const categoryTitle = createElement('h2', 'text-2xl font-bold text-gray-800 mb-6 capitalize border-b-2 border-blue-200 pb-2 category-title');
+                    categoryTitle.textContent = category;
                     
                     categoryContainer.appendChild(categoryTitle);
 
