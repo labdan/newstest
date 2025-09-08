@@ -85,13 +85,6 @@
             .source-link {
                 display: none;
             }
-            .category-icon {
-                display: inline-block;
-                width: 24px;
-                height: 24px;
-                margin-right: 8px;
-                vertical-align: middle;
-            }
         }
     </style>
 </head>
@@ -113,7 +106,6 @@
         </button>
     </div>
 
-    <!-- Loading Indicator -->
     <div id="loading-spinner" class="hidden flex justify-center py-8">
         <div class="loader"></div>
     </div>
@@ -122,7 +114,6 @@
         <h1 class="text-4xl font-extrabold text-gray-900 mb-2">Your AI Newsletter</h1>
     </div>
 
-    <!-- Newsletter Output -->
     <div id="newsletter-output" class="space-y-10"></div>
 </div>
 
@@ -139,20 +130,6 @@
         if (classes) el.className = classes;
         if (text) el.textContent = text;
         return el;
-    };
-
-    // Mapping for category icons
-    const categoryIcons = {
-        'technology': `<svg class="category-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0272bc"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 16H9v-2h2v2zm0-4H9v-2h2v2zm0-4H9V8h2v2zm4 4h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V8h2v2z"/></svg>`,
-        'business': `<svg class="category-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0272bc"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 16h4c1.1 0 2-.9 2-2v-2h-8v2c0 1.1.9 2 2 2zm0-4h4c1.1 0 2-.9 2-2v-2h-8v2c0 1.1.9 2 2 2zm0-4h4V8h-4v2zm4-4V5.99c0-.55-.45-1-1-1h-2c-.55 0-1 .45-1 1v2h4z"/></svg>`,
-        'science': `<svg class="category-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0272bc"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 16H9v-2h2v2zm0-4H9v-2h2v2zm0-4H9V8h2v2zm4 4h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V8h2v2z"/></svg>`,
-        'finance': `<svg class="category-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0272bc"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 16H9v-2h2v2zm0-4H9v-2h2v2zm0-4H9V8h2v2zm4 4h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V8h2v2z"/></svg>`,
-        'general': `<svg class="category-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0272bc"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 16H9v-2h2v2zm0-4H9v-2h2v2zm0-4H9V8h2v2zm4 4h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V8h2v2z"/></svg>`,
-    };
-
-    const getIconForCategory = (category) => {
-        const key = category.toLowerCase().trim();
-        return categoryIcons[key] || categoryIcons['general'];
     };
 
     generateButton.addEventListener('click', async () => {
@@ -188,7 +165,7 @@
                     
                     const categoryContainer = createElement('div', 'bg-white p-6 rounded-2xl shadow-lg newsletter-section');
                     const categoryTitle = createElement('h2', 'text-2xl font-bold text-gray-800 mb-6 capitalize border-b-2 border-blue-200 pb-2 category-title');
-                    categoryTitle.innerHTML = `${getIconForCategory(category)}<span>${category}</span>`;
+                    categoryTitle.textContent = category;
                     
                     categoryContainer.appendChild(categoryTitle);
 
@@ -257,9 +234,8 @@
             downloadPdfButton.classList.remove('hidden');
         }
     });
-    
-    // New function to handle PDF generation
-    const generatePdf = () => {
+
+    const generatePdf = async () => {
         downloadPdfButton.disabled = true;
         downloadPdfButton.textContent = 'Generating...';
 
@@ -268,22 +244,33 @@
             const doc = new jsPDF('p', 'pt', 'a4');
             const element = document.getElementById('newsletter-output');
 
-            doc.html(element, {
-                callback: (doc) => {
-                    doc.save('newsletter.pdf');
-                    downloadPdfButton.disabled = false;
-                    downloadPdfButton.textContent = 'Download PDF';
-                },
-                x: 10,
-                y: 10,
-                width: 550, // Fixed width to ensure content wraps correctly
-            }).catch(error => {
-                console.error("PDF generation failed:", error);
-                downloadPdfButton.disabled = false;
-                downloadPdfButton.textContent = 'Download PDF';
+            const canvas = await html2canvas(element, {
+                scale: 2, // Increase scale for better resolution
+                useCORS: true,
             });
+
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = 595.28; // A4 width in pt
+            const pageHeight = 841.89; // A4 height in pt
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                doc.addPage();
+                doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            doc.save('newsletter.pdf');
+            
         } catch(error) {
-            console.error("An error occurred during PDF generation:", error);
+            console.error("PDF generation failed:", error);
+        } finally {
             downloadPdfButton.disabled = false;
             downloadPdfButton.textContent = 'Download PDF';
         }
