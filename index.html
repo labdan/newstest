@@ -34,17 +34,44 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* PDF specific styles */
+        @media print {
+            body {
+                background-color: #fff;
+                color: #000;
+                margin: 0;
+                padding: 0;
+            }
+            .container {
+                max-width: 100%;
+                padding: 10mm;
+                box-shadow: none;
+            }
+            #newsletter-output {
+                page-break-after: always;
+            }
+            .newsletter-article {
+                page-break-inside: avoid;
+            }
+            .no-print {
+                display: none;
+            }
+            h1, h2, h3, p, ul, li {
+                color: #000 !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
 <div class="container bg-white p-8 rounded-2xl shadow-xl w-full">
-    <div class="text-center mb-8">
+    <div class="text-center mb-8 no-print">
         <h1 class="text-4xl font-extrabold text-gray-900 mb-2">AI Newsletter Generator</h1>
         <p class="text-lg text-gray-600">Enter categories to get the latest headlines and summaries.</p>
     </div>
 
-    <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-8">
+    <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-8 no-print">
         <input id="category-input" type="text" placeholder="e.g., Technology, Business, Science" class="flex-grow w-full px-5 py-3 text-gray-700 bg-gray-50 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" />
         <button id="generate-button" class="w-full sm:w-auto px-6 py-3 font-semibold text-white bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 shadow-md">
             Generate Newsletter
@@ -57,6 +84,10 @@
     <!-- Loading Indicator -->
     <div id="loading-spinner" class="hidden flex justify-center py-8">
         <div class="loader"></div>
+    </div>
+    
+    <div class="text-center mb-8 hidden print-only">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-2">Your AI Newsletter</h1>
     </div>
 
     <!-- Newsletter Output -->
@@ -109,7 +140,7 @@
                     const generatedText = data.generatedText;
                     const sources = data.sources || [];
                     
-                    const categoryContainer = createElement('div', 'bg-white p-6 rounded-2xl shadow-lg');
+                    const categoryContainer = createElement('div', 'bg-white p-6 rounded-2xl shadow-lg newsletter-section');
                     const categoryTitle = createElement('h2', 'text-2xl font-bold text-gray-800 mb-6 capitalize border-b-2 border-blue-200 pb-2', category);
                     
                     categoryContainer.appendChild(categoryTitle);
@@ -124,7 +155,7 @@
                             if (currentArticle) {
                                 categoryContainer.appendChild(currentArticle);
                             }
-                            currentArticle = createElement('div', 'p-4 rounded-xl border border-gray-200 mb-4 hover:shadow-md transition-shadow');
+                            currentArticle = createElement('div', 'p-4 rounded-xl border border-gray-200 mb-4 hover:shadow-md transition-shadow newsletter-article');
                             const headlineText = line.substring(2, line.length - 2);
                             const headlineElement = createElement('h3', 'text-lg font-bold text-gray-900', headlineText);
                             currentArticle.appendChild(headlineElement);
@@ -174,27 +205,33 @@
         downloadPdfButton.disabled = true;
         downloadPdfButton.textContent = 'Generating...';
 
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'pt', 'a4');
-        const element = document.getElementById('newsletter-output');
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'pt', 'a4');
+            const element = document.getElementById('newsletter-output');
 
-        doc.html(element, {
-            callback: (doc) => {
-                doc.save('newsletter.pdf');
+            doc.html(element, {
+                callback: (doc) => {
+                    doc.save('newsletter.pdf');
+                    downloadPdfButton.disabled = false;
+                    downloadPdfButton.textContent = 'Download PDF';
+                },
+                x: 10,
+                y: 10,
+                html2canvas: {
+                    scale: 0.8,
+                    windowWidth: element.offsetWidth
+                }
+            }).catch(error => {
+                console.error("PDF generation failed:", error);
                 downloadPdfButton.disabled = false;
                 downloadPdfButton.textContent = 'Download PDF';
-            },
-            x: 10,
-            y: 10,
-            html2canvas: {
-                scale: 0.8,
-                windowWidth: element.offsetWidth
-            }
-        }).catch(error => {
-            console.error("PDF generation failed:", error);
+            });
+        } catch(error) {
+            console.error("An error occurred during PDF generation:", error);
             downloadPdfButton.disabled = false;
             downloadPdfButton.textContent = 'Download PDF';
-        });
+        }
     });
 </script>
 
