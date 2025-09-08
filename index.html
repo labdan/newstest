@@ -61,6 +61,8 @@
             }
             .newsletter-article h3 {
                 font-size: 16px;
+                line-height: 1.2;
+                margin-bottom: 5px;
             }
             .newsletter-article p {
                 font-size: 12px;
@@ -76,6 +78,9 @@
             }
             .print-only {
                 display: block !important;
+            }
+            .source-link {
+                display: none;
             }
         }
     </style>
@@ -175,6 +180,18 @@
                             const headlineText = line.substring(2, line.length - 2);
                             const headlineElement = createElement('h3', 'text-lg font-bold text-gray-900', headlineText);
                             currentArticle.appendChild(headlineElement);
+
+                            if (sources.length > 0) {
+                                const sourceLink = document.createElement('a');
+                                sourceLink.href = sources[0].uri;
+                                sourceLink.target = '_blank';
+                                sourceLink.className = 'text-sm text-blue-500 hover:underline ml-2';
+                                sourceLink.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-4-2h4m0 0v4m0-4L14 6" />
+                                </svg>`;
+                                headlineElement.appendChild(sourceLink);
+                            }
+
                         } else if (currentArticle) {
                             const summaryElement = createElement('p', 'text-gray-700 mt-2 leading-relaxed', line);
                             currentArticle.appendChild(summaryElement);
@@ -234,10 +251,7 @@
                 },
                 x: 10,
                 y: 10,
-                html2canvas: {
-                    scale: 0.8,
-                    windowWidth: element.offsetWidth
-                }
+                width: 550, // Fixed width to ensure content wraps correctly
             }).catch(error => {
                 console.error("PDF generation failed:", error);
                 downloadPdfButton.disabled = false;
